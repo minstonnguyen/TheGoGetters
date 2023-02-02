@@ -1,0 +1,34 @@
+import java.util.Scanner;
+
+public class SentimentAnalysis {
+  public static void main(String[] args) {
+    Scanner sc = new Scanner(System.in);
+    System.out.print("Enter a text string: ");
+    String text = sc.nextLine();
+
+    int sentimentScore = 0;
+    String[] words = text.split(" ");
+    for (String word : words) {
+      switch (word.toLowerCase()) {
+        case "good":
+        case "great":
+        case "excellent":
+          sentimentScore++;
+          break;
+        case "bad":
+        case "terrible":
+        case "horrible":
+          sentimentScore--;
+          break;
+      }
+    }
+
+    if (sentimentScore > 0) {
+      System.out.println("Positive");
+    } else if (sentimentScore < 0) {
+      System.out.println("Negative");
+    } else {
+      System.out.println("Neutral");
+    }
+  }
+}
