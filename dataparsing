@@ -1,0 +1,46 @@
+import argparse
+import csv
+import json
+import xml.etree.ElementTree as ET
+
+
+# Parse command-line arguments
+parser = argparse.ArgumentParser()
+parser.add_argument('filename', help='Name of input file')
+parser.add_argument('format', choices=['-c', '-j', '-x'], help='Output format')
+args = parser.parse_args()
+
+
+# Read data from input file
+with open(args.filename, 'r') as f:
+    reader = csv.DictReader(f, delimiter='\t')
+    data = [row for row in reader]
+
+
+# Convert data to output format
+if args.format == '-c':
+    # Write CSV file
+    with open('output.csv', 'w') as f:
+        writer = csv.writer(f)
+        writer.writerow(data[0].keys())
+        for row in data:
+            writer.writerow(row.values())
+elif args.format == '-j':
+    # Write JSON file
+    with open('output.json', 'w') as f:
+        json.dump(data, f, indent=4)
+elif args.format == '-x':
+    # Write XML file
+    root = ET.Element('data')
+    for row in data:
+        row_elem = ET.SubElement(root, 'row')
+        for key, value in row.items():
+            key_elem = ET.SubElement(row_elem, key)
+            key_elem.text = value
+    tree = ET.ElementTree(root)
+    tree.write('output.xml', encoding='utf-8', xml_declaration=True, pretty_print=True)
+
+
+
+
+
