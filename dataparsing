@@ -1,46 +1,58 @@
 import argparse
 import csv
 import json
+import re
 import xml.etree.ElementTree as ET
 
 
-# Parse command-line arguments
-parser = argparse.ArgumentParser()
-parser.add_argument('filename', help='Name of input file')
-parser.add_argument('format', choices=['-c', '-j', '-x'], help='Output format')
+# Define the argument parser
+parser = argparse.ArgumentParser(description='Convert a Tab delimited text data file to CSV, JSON, or XML format')
+parser.add_argument('filename', metavar='filename', type=str, help='the name of the file to convert')
+parser.add_argument('format', metavar='format', type=str, help='the format to convert the file to (-c for CSV, -j for JSON, or -x for XML)')
+
+
+# Parse the arguments
 args = parser.parse_args()
 
 
-# Read data from input file
-with open(args.filename, 'r') as f:
-    reader = csv.DictReader(f, delimiter='\t')
-    data = [row for row in reader]
+# Read the input file and remove slashes and spaces
+with open(args.filename, 'r') as file:
+    data = file.read()
+    data = re.sub(r'[\\\/\s]+', '', data)
 
 
-# Convert data to output format
+# Convert the data to the requested format
 if args.format == '-c':
-    # Write CSV file
-    with open('output.csv', 'w') as f:
-        writer = csv.writer(f)
-        writer.writerow(data[0].keys())
-        for row in data:
-            writer.writerow(row.values())
+    # Convert to CSV format
+    with open('output.csv', 'w', newline='') as file:
+        writer = csv.writer(file, delimiter=',')
+        lines = data.split('\n')
+        for line in lines:
+            writer.writerow(line.split('\t'))
 elif args.format == '-j':
-    # Write JSON file
-    with open('output.json', 'w') as f:
-        json.dump(data, f, indent=4)
+    # Convert to JSON format
+    lines = data.split('\n')
+    headers = lines[0].split('\t')
+    objects = []
+    for line in lines[1:]:
+        if line:
+            values = line.split('\t')
+            obj = {}
+            for i in range(len(headers)):
+                obj[headers[i]] = values[i]
+            objects.append(obj)
+    with open('output.json', 'w') as file:
+        json.dump(objects, file, indent=4)
 elif args.format == '-x':
-    # Write XML file
+    # Convert to XML format
     root = ET.Element('data')
-    for row in data:
-        row_elem = ET.SubElement(root, 'row')
-        for key, value in row.items():
-            key_elem = ET.SubElement(row_elem, key)
-            key_elem.text = value
+    lines = data.split('\n')
+    headers = lines[0].split('\t')
+    for line in lines[1:]:
+        if line:
+            values = line.split('\t')
+            obj = ET.SubElement(root, 'row')
+            for i in range(len(headers)):
+                obj.set(headers[i], values[i])
     tree = ET.ElementTree(root)
     tree.write('output.xml', encoding='utf-8', xml_declaration=True, pretty_print=True)
-
-
-
-
-
